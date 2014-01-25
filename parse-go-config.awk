@@ -1,4 +1,5 @@
 #!/usr/bin/awk -f
+# Yes, I know it is foolish and wrong to attempt to parse XML with Awk. It’s a bad habit.
 BEGIN{PROCINFO["sorted_in"]="@ind_num_asc"}
 $0 ~ /<pipelines / {
 	split($2,groupBits,"\"")
@@ -10,7 +11,7 @@ inMaterials==0 && $0 ~ /<pipeline name=/ {
 	split($2, name, "\"")
 	currentPipeline=name[2]
 	nodeIndices[currentPipeline]=nodeIndex
-	nodes[nodeIndex]="{\"name\":\"" currentPipeline "\", \"group\": \"" pipelineGroup "\", \"shape\": \"circle\"},"
+	nodes[nodeIndex]=currentPipeline "," pipelineGroup ",circle"
 	nodeIndex++
 }
 $0 ~ /<materials>/ {
@@ -26,10 +27,11 @@ inMaterials==1 && $0 ~ /<pipeline / {
 inMaterials==1 && $0 ~ /url="/ {
 	split($2, urlBits, "\"")
 	url=urlBits[2]
-	node="{\"name\":\"" url "\", \"group\": \"Source Code\"},"
+	scm=$1
+	sub(/</,"",scm)
 	if (! nodeIndices[url]) {
 		nodeIndices[url]=nodeIndex
-		nodes[nodeIndex++]="{\"name\":\"" url "\", \"group\": \"Source Code\", \"shape\": \"triangle-up\"},"
+		nodes[nodeIndex++]=url "," scm ",triangle-up"
 	}
 	links[linkIndex++]=currentPipeline "," url
 }
@@ -37,7 +39,8 @@ inMaterials==1 && $0 ~ /url="/ {
 END {
 	print "var graph = {\n\"nodes\":["
 	for(n in nodes) {
-		print nodes[n]
+		split(nodes[n], nodeBits, ",")
+		print "{\"name\":\"" nodeBits[1] "\", \"group\": \"" nodeBits[2] "\", \"shape\": \"" nodeBits[3] "\"},"
 	}
 	print "],\n\"links\":["
 	for (l in links){
