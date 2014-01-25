@@ -23,6 +23,7 @@ $0 ~ /<\/materials>/ {
 inMaterials==1 && $0 ~ /<pipeline / {
 	split($2, name, "\"")
 	links[linkIndex++]=currentPipeline "," name[2]
+	nodeDependencies[name[2]]+=1
 }
 inMaterials==1 && $0 ~ /url="/ {
 	split($2, urlBits, "\"")
