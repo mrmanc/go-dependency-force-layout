@@ -1,6 +1,8 @@
-#!/usr/bin/awk -f
+#!/usr/local/bin/gawk -f
 # Yes, I know it is foolish and wrong to attempt to parse XML with Awk. It’s a bad habit.
-BEGIN{PROCINFO["sorted_in"]="@ind_num_asc"}
+BEGIN{
+	PROCINFO["sorted_in"]="@ind_num_asc"
+}
 $0 ~ /<pipelines / {
 	split($2,groupBits,"\"")
 	pipelineGroup=groupBits[2]
@@ -11,7 +13,8 @@ inMaterials==0 && $0 ~ /<pipeline name=/ {
 	split($2, name, "\"")
 	currentPipeline=name[2]
 	nodeIndices[currentPipeline]=nodeIndex
-	nodes[nodeIndex]=currentPipeline "," pipelineGroup ",circle"
+	nodes[nodeIndex]=currentPipeline "," pipelineGroup ",circle," nodeIndex
+	nodeDependencies[name[2]]=0
 	nodeIndex++
 }
 $0 ~ /<materials>/ {
@@ -23,6 +26,7 @@ $0 ~ /<\/materials>/ {
 inMaterials==1 && $0 ~ /<pipeline / {
 	split($2, name, "\"")
 	links[linkIndex++]=currentPipeline "," name[2]
+	nodeDependencies[name[2]]+=1
 }
 inMaterials==1 && $0 ~ /url="/ {
 	split($2, urlBits, "\"")
@@ -31,16 +35,19 @@ inMaterials==1 && $0 ~ /url="/ {
 	sub(/</,"",scm)
 	if (! nodeIndices[url]) {
 		nodeIndices[url]=nodeIndex
-		nodes[nodeIndex++]=url "," scm ",triangle-up"
+		nodes[nodeIndex++]=url "," scm ",triangle-up," nodeIndex
+		nodeDependencies[url]=0
 	}
 	links[linkIndex++]=currentPipeline "," url
+	nodeDependencies[url]+=1
 }
 
 END {
+PROCINFO["sorted_in"]="@ind_num_asc"
 	print "var graph = {\n\"nodes\":["
 	for(n in nodes) {
 		split(nodes[n], nodeBits, ",")
-		print "{\"name\":\"" nodeBits[1] "\", \"group\": \"" nodeBits[2] "\", \"shape\": \"" nodeBits[3] "\"},"
+		print "{\"name\":\"" nodeBits[1] "\", \"group\": \"" nodeBits[2] "\", \"shape\": \"" nodeBits[3] "\", \"size\": " nodeDependencies[nodeBits[1]]+1 ", \"fyi-node-index\": " nodeBits[4] "},"
 	}
 	print "],\n\"links\":["
 	for (l in links){
