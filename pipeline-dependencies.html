@@ -22,26 +22,78 @@ body {
 <script src="d3.v3.min.js"></script>
 <script>
 
-var graph = {
-	"nodes": [
-		{"name":"Pipeline One", "group": "One", "shape": "circle", "size": 0},
-		{"name":"Pipeline Two", "group": "Two", "shape": "circle", "size": 1},
-		{"name":"http://svn/trunk/", "group": "Source Code", "shape": "triangle-up", "size": 2},
-	],
-	"links":[
-		{"source":0, "target":2, "value": 1},
-		{"source":1, "target":2, "value": 1},
-		{"source":0, "target":1, "value": 1},
-	]
-};
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+  
+xmlhttp.open("GET","http://localhost:8081/go_config.xml",false);
+xmlhttp.send();
+xmlDoc=xmlhttp.responseXML;
+nodes = []
+links = []
+sizes = {}
+nodeIndexes = {}
+var pipelineGroups=xmlDoc.getElementsByTagName("pipelines")
+for(groupIndex=0; groupIndex < pipelineGroups.length; groupIndex++) {
+	var pipelineGroup = pipelineGroups[groupIndex]
+	var pipelines=pipelineGroup.getElementsByTagName('pipeline')
+	for(pipelineIndex=0; pipelineIndex < pipelines.length; pipelineIndex++) {
+		var pipeline = pipelines[pipelineIndex]
+		var pipelineName=pipeline.getAttribute('name')
+		if (pipelineName) {
+			foundNode(pipelineName, pipelineGroup.getAttribute('group'), 'circle')
+			if (pipeline.getElementsByTagName('materials')[0]) {
+				var materials=pipeline.getElementsByTagName('materials')[0].children
+				for (materialIndex=0; materialIndex < materials.length; materialIndex++) {
+					var material=materials[materialIndex]
+					var materialName
+					if (material.tagName==='pipeline') {
+						materialName=material.getAttribute('pipelineName')
+					}
+					else {
+						materialName = material.getAttribute('url')
+						if (! nodes[materialName]) {
+							foundNode(materialName, material.tagName, 'triangle-up')
+						}
+					}
+					links.push([pipelineName, materialName])
+					sizes[materialName]++
+				}
+			}
+		}
+	}
+}
 
-var width = 300,//window.innerWidth,
-    height = 300,//window.innerHeight,
+var graph = {'nodes': [], 'links': []}
+
+for (nodeIndex=0;nodeIndex<nodes.length;nodeIndex++) {
+	var node=nodes[nodeIndex]
+	graph.nodes.push({'name': node.name, 'group': node.group, 'shape': node.shape, 'size': sizes[node.name]})
+}
+for (linkIndex=0;linkIndex<links.length;linkIndex++) {
+	var sourceName=links[linkIndex][0], targetName=links[linkIndex][1]
+	graph.links.push({'source': nodeIndexes[sourceName], 'target': nodeIndexes[targetName]})
+}
+
+function foundNode(name, group, shape) {
+	if (! nodeIndexes[name]) {
+		nodeIndexes[name]=nodes.length
+		nodes.push({'name': name, 'group': group, 'shape': shape})
+		sizes[name]=0
+	}
+}
+
+var width = 3000,//window.innerWidth,
+    height = 3000,//window.innerHeight,
     radius = 5,
     color = d3.scale.category20();
 
 var force = d3.layout.force()
-//    .gravity(0.1)
     .charge(-300)
     .linkDistance(100)
     .size([width, height]);
