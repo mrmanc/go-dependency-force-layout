@@ -31,7 +31,7 @@ else
   xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
   }
   
-xmlhttp.open("GET","http://localhost:8081/go_config.xml",false);
+xmlhttp.open("GET","http://localhost:8081/sample.xml",false);
 xmlhttp.send();
 xmlDoc=xmlhttp.responseXML;
 nodes = []
@@ -88,9 +88,9 @@ function foundNode(name, group, shape) {
 	}
 }
 
-var width = 3000,//window.innerWidth,
-    height = 3000,//window.innerHeight,
-    radius = 5,
+var width = window.innerWidth,
+    height = window.innerHeight,
+    radius = 70,
     color = d3.scale.category20();
 
 var force = d3.layout.force()
@@ -123,7 +123,7 @@ var drawGraph = function(graph) {
      
   var node = gnodes.append("path")
       .attr("d", d3.svg.symbol()
-        .size(function(d) { return 70+d.size*70; })
+        .size(function(d) { return radius+d.size*radius; })
         .type(function(d) { return d.shape; })
       )
       .style("fill", function(d) { return color(d.group); })

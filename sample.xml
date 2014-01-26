@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="18">
+ <server artifactsdir="artifacts">
+ <license user=""></license>
+ </server>
+ <pipelines group="myGroup">
+ <pipeline name="myJavaProject">
+ <materials>
+ <hg url="http://localhost:8000/project" />
+ <hg url="http://localhost:8000/other" />
+ </materials>
+ <stage name="defaultStage">
+ <jobs>
+ <job name="defaultJob">
+ <tasks>
+ <ant buildfile="build.xml" target="jar" />
+ </tasks>
+ </job>
+ </jobs>
+ </stage>
+ </pipeline>
+
+
+ </pipelines>
+ <pipelines group="anotherGroup">
+ <pipeline name="myOtherJavaProject">
+ <materials>
+ <hg url="http://localhost:8000/other" />
+ <pipeline pipelineName="myJavaProject" stageName="defaultStage" />
+ </materials>
+ <stage name="defaultStage">
+ <jobs>
+ <job name="defaultJob">
+ <tasks>
+ <ant buildfile="build.xml" target="jar" />
+ </tasks>
+ </job>
+ </jobs>
+ </stage>
+ </pipeline>
+ </pipelines>
+</cruise>
