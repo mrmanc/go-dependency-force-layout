@@ -31,7 +31,7 @@ else
   xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
   }
   
-xmlhttp.open("GET","http://localhost:8081/sample.xml",false);
+xmlhttp.open("GET","sample.xml",false);
 xmlhttp.send();
 xmlDoc=xmlhttp.responseXML;
 nodes = []
@@ -47,6 +47,12 @@ for(groupIndex=0; groupIndex < pipelineGroups.length; groupIndex++) {
 		var pipelineName=pipeline.getAttribute('name')
 		if (pipelineName) {
 			foundNode(pipelineName, pipelineGroup.getAttribute('group'), 'circle')
+			if (pipeline.getAttribute('template')) {
+				foundNode(pipeline.getAttribute('template'), 'templates', 'square')
+				links.push([pipelineName, pipeline.getAttribute('template')])
+				sizes[pipeline.getAttribute('template')]++
+				console.log('increasing size of ' + pipeline.getAttribute('template'))
+			}
 			if (pipeline.getElementsByTagName('materials')[0]) {
 				var materials=pipeline.getElementsByTagName('materials')[0].children
 				for (materialIndex=0; materialIndex < materials.length; materialIndex++) {
@@ -68,7 +74,10 @@ for(groupIndex=0; groupIndex < pipelineGroups.length; groupIndex++) {
 		}
 	}
 }
-
+var templates=xmlDoc.getElementsByTagName("templates")[0].getElementsByTagName("pipeline")
+for(templateIndex=0; templateIndex < templates.length; templateIndex++) {
+	foundNode(templates[templateIndex].getAttribute('name'), 'templates', 'square')
+}
 var graph = {'nodes': [], 'links': []}
 
 for (nodeIndex=0;nodeIndex<nodes.length;nodeIndex++) {

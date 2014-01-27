@@ -39,4 +39,25 @@
  </stage>
  </pipeline>
  </pipelines>
+ <pipelines group="anotherGroup">
+ <pipeline name="templatedPipeline" template="template">
+ <materials>
+ <hg url="http://localhost:8000/other" />
+ <pipeline pipelineName="myJavaProject" stageName="defaultStage" />
+ </materials>
+ </pipeline>
+ </pipelines>
+ <templates>
+ <pipeline name="template">
+ <stage name="defaultStage">
+ <jobs>
+ <job name="defaultJob">
+ <tasks>
+ <ant buildfile="build.xml" target="jar" />
+ </tasks>
+ </job>
+ </jobs>
+ </stage>
+ </pipeline>
+ </templates>
 </cruise>
