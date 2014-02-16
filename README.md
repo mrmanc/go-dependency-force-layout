@@ -19,7 +19,7 @@ Simply point the page at the configuration XML by supplying a configUrl paramete
 http://localhost:8081/pipeline-dependencies.html?configUrl=http://yourgoserver/go/admin/config_xml
 ```
 
-It will default to the included sample.xml if you do not supply the parameter, to give you an idea of how it works.
+It will default to the included [sample.xml](sample.xml) if you do not supply the parameter, to give you an idea of how it works.
 
 I built this to see if it could help me understand how our organisation was using Go, and it proved very enlightening.
 
