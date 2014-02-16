@@ -2,18 +2,18 @@
 <meta charset="utf-8">
 <style>
 body {
-  font-family: sans-serif;
-  font-size: 8pt;
-  color: grey;
+	font-family: sans-serif;
+	font-size: 8pt;
+	color: grey;
 }
 .node {
-  stroke: #fff;
-  stroke-width: 1.5px;
+	stroke: #fff;
+	stroke-width: 1.5px;
 }
 
 .link {
-  stroke: #999;
-  stroke-opacity: .6;
+	stroke: #999;
+	stroke-opacity: .6;
 }
 
 </style>
@@ -21,19 +21,7 @@ body {
 <!--script src="http://d3js.org/d3.v3.min.js"></script-->
 <script src="d3.v3.min.js"></script>
 <script>
-
-if (window.XMLHttpRequest)
-  {// code for IE7+, Firefox, Chrome, Opera, Safari
-  xmlhttp=new XMLHttpRequest();
-  }
-else
-  {// code for IE6, IE5
-  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-  }
-  
-xmlhttp.open("GET","sample.xml",false);
-xmlhttp.send();
-xmlDoc=xmlhttp.responseXML;
+xmlDoc=loadConfigDocument();
 nodes = []
 links = []
 sizes = {}
@@ -88,6 +76,20 @@ for (linkIndex=0;linkIndex<links.length;linkIndex++) {
 	graph.links.push({'source': nodeIndexes[sourceName], 'target': nodeIndexes[targetName]})
 }
 
+function loadConfigDocument() {
+	if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+		xmlhttp=new XMLHttpRequest();
+	}
+	else { // code for IE6, IE5
+		xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+
+	configUrl=getParameterByName("configUrl") || "sample.xml";
+	xmlhttp.open("GET", configUrl, false)
+	xmlhttp.withCredentials = "true"; 
+	xmlhttp.send();
+	return xmlhttp.responseXML;
+}
 function foundNode(name, group, shape) {
 	if (! nodeIndexes[name]) {
 		nodeIndexes[name]=nodes.length
@@ -95,96 +97,105 @@ function foundNode(name, group, shape) {
 		sizes[name]=0
 	}
 }
-
+function getParameterByName(name, url) {
+	var url = typeof url !== 'undefined' ? url : window.location.href
+	name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+	var regexS = "[\\?&]" + name + "=([^&#]*)";
+	var regex = new RegExp(regexS);
+	var results = regex.exec(url);
+	if(results == null)
+		return "";
+	else
+		return decodeURIComponent(results[1].replace(/\+/g, " "));
+}
 var width = window.innerWidth,
-    height = window.innerHeight,
-    radius = 70,
-    color = d3.scale.category20();
+	height = window.innerHeight,
+	radius = 70,
+	color = d3.scale.category20();
 
 var force = d3.layout.force()
-    .charge(-300)
-    .linkDistance(100)
-    .size([width, height]);
+		.charge(-300)
+		.linkDistance(100)
+		.size([width, height]);
 
 var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height);
+		.attr("width", width)
+		.attr("height", height);
 
 var drawGraph = function(graph) {
-  force
-      .nodes(graph.nodes)
-      .links(graph.links)
-      .start();
+	force
+		.nodes(graph.nodes)
+		.links(graph.links)
+		.start();
 
-    svg.append("svg:defs").selectAll("marker")
-      .data(["arrow"])
-      .enter()
-      .append("marker")
-        .attr("id", function(d) { return d; })
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 15)
-        .attr("refY", -1.5)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
-        .attr("orient", "auto")
-      .append("path")
-        .style("stroke", function(d) { return "grey"; })
-        .style("fill", function(d) { return "grey"; })
-        .attr("d", "M0,-5L10,0L0,5");
-        
-  var links = svg.selectAll(".link")
-      .data(graph.links)
-    .enter()
-      .append("svg:path")
-      .style("fill", function(d) { return "none"; })
-      .style("stroke", function(d) { return "grey"; })
-      .attr("marker-end", function(d) { return "url(#arrow)"; });
-      
-  var gnodes = svg.selectAll('g.gnode')
-     .data(graph.nodes)
-     .enter()
-     .append('g')
-     .classed('gnode', true);
-     
-  var node = gnodes.append("path")
-      .attr("d", d3.svg.symbol()
-        .size(function(d) { return radius+d.size*radius; })
-        .type(function(d) { return d.shape; })
-      )
-      .style("fill", function(d) { return color(d.group); })
-      .style("stroke", function(d) { return d3.rgb(color(d.group)).darker(); })
-      .call(force.drag);
+	svg.append("svg:defs").selectAll("marker")
+		.data(["arrow"])
+		.enter()
+		.append("marker")
+			.attr("id", function(d) { return d; })
+			.attr("viewBox", "0 -5 10 10")
+			.attr("refX", 15)
+			.attr("refY", -1.5)
+			.attr("markerWidth", 6)
+			.attr("markerHeight", 6)
+			.attr("orient", "auto")
+		.append("path")
+			.style("stroke", function(d) { return "grey"; })
+			.style("fill", function(d) { return "grey"; })
+			.attr("d", "M0,-5L10,0L0,5");
 
-  var labels = gnodes.append("text")
-      .text(function(d) { return d.name; })
-      .attr("x", function(d) { return 10 + d.size; })
-      .attr("y", "3")
-      .attr("font-family", "sans-serif")
-      .attr("font-size","7pt")
-      .attr("fill", function(d) { return d3.rgb(color(d.group)).darker(); });
+	var links = svg.selectAll(".link")
+		.data(graph.links)
+		.enter()
+			.append("svg:path")
+			.style("fill", function(d) { return "none"; })
+			.style("stroke", function(d) { return "grey"; })
+			.attr("marker-end", function(d) { return "url(#arrow)"; });
 
-    
-  force.on("tick", function() {
-    links.attr('d', linkRespectingRadius);
-    gnodes.attr("transform", function(d) { 
-        return 'translate(' + [d.x, d.y] + ')';
-    });
-  });
+	var gnodes = svg.selectAll('g.gnode')
+		 .data(graph.nodes)
+		 .enter()
+		 .append('g')
+		 .classed('gnode', true);
+ 
+	var node = gnodes.append("path")
+		.attr("d", d3.svg.symbol()
+			.size(function(d) { return radius+d.size*radius; })
+			.type(function(d) { return d.shape; })
+		)
+		.style("fill", function(d) { return color(d.group); })
+		.style("stroke", function(d) { return d3.rgb(color(d.group)).darker(); })
+		.call(force.drag);
+
+	var labels = gnodes.append("text")
+		.text(function(d) { return d.name; })
+		.attr("x", function(d) { return 10 + d.size; })
+		.attr("y", "3")
+		.attr("font-family", "sans-serif")
+		.attr("font-size","7pt")
+		.attr("fill", function(d) { return d3.rgb(color(d.group)).darker(); });
+
+	force.on("tick", function() {
+		links.attr('d', linkRespectingRadius);
+		gnodes.attr("transform", function(d) { 
+				return 'translate(' + [d.x, d.y] + ')';
+		});
+	});
 };
 
 function linkRespectingRadius(d) {
-            // Total difference in x and y from source to target
-            diffX = d.target.x - d.source.x;
-            diffY = d.target.y - d.source.y;
+	// Total difference in x and y from source to target
+	diffX = d.target.x - d.source.x;
+	diffY = d.target.y - d.source.y;
 
-            // Length of path from center of source node to center of target node
-            pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
-            radiusOfTarget=d.target.size+3
-            // x and y distances from center to outside edge of target node
-            offsetX = (diffX * radiusOfTarget) / pathLength;
-            offsetY = (diffY * radiusOfTarget) / pathLength;
+	// Length of path from center of source node to center of target node
+	pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
+	radiusOfTarget=d.target.size+3
+	// x and y distances from center to outside edge of target node
+	offsetX = (diffX * radiusOfTarget) / pathLength;
+	offsetY = (diffY * radiusOfTarget) / pathLength;
 
-            return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
+	return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
 }
 
 drawGraph(graph);
