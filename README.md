@@ -7,7 +7,7 @@ This is a tool to visualise the web of dependencies present in a large configura
 
 ![circle](/images/pipeline.png "circle") Circles represent pipelines, ![square](/images/template.png "square") squares represent pipeline templates, and ![triangle](/images/source.png "triangle") triangles represent source code repositories. The size of each grows with more incoming dependencies. Pipelines in the same groups are coloured similarly.
 
-It uses the excellent work of Mike Bostock on [d3js](http://d3js.org/), adapted from a number of [his examples](http://bl.ocks.org/mbostock) (e.g. http://bl.ocks.org/mbostock/4062045).
+It uses the excellent work of Mike Bostock on [D3.js](http://d3js.org/), adapted from a number of [his examples](http://bl.ocks.org/mbostock) (e.g. http://bl.ocks.org/mbostock/4062045).
 
 It works by fetching the configuration XML over HTTP, either from the [Configuration API](http://www.thoughtworks.com/products/docs/go/current/help/Configuration_API.html) (provided you are a logged in Go Admin) or from a supplied URL. If you want to fetch directly from Go, then you should issue the ```Access-Control-Allow-Credentials: true``` header from your Go instance to ensure your browser is allowed to send your cookie credentials to Go. [See here for more info about Cross Origin Resource Sharing](http://enable-cors.org/server_apache.html).
 
