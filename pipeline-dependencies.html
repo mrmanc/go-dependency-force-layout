@@ -78,17 +78,17 @@ for (linkIndex=0;linkIndex<links.length;linkIndex++) {
 
 function loadConfigDocument() {
 	if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
-		xmlhttp=new XMLHttpRequest();
+		xmlHttp=new XMLHttpRequest();
 	}
 	else { // code for IE6, IE5
-		xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+		xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");
 	}
 
 	configUrl=getParameterByName("configUrl") || "sample.xml";
-	xmlhttp.open("GET", configUrl, false)
-	xmlhttp.withCredentials = "true"; 
-	xmlhttp.send();
-	return xmlhttp.responseXML;
+	xmlHttp.open("GET", configUrl, false)
+	xmlHttp.withCredentials = "true"; 
+	xmlHttp.send();
+	return xmlHttp.responseXML;
 }
 function foundNode(name, group, shape) {
 	if (! nodeIndexes[name]) {
