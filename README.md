@@ -9,7 +9,7 @@ This is a tool to visualise the web of dependencies present in a large configura
 
 It uses the excellent work of Mike Bostock on [D3.js](http://d3js.org/), adapted from a number of [his examples](http://bl.ocks.org/mbostock) (e.g. http://bl.ocks.org/mbostock/4062045).
 
-It works by fetching the configuration XML over HTTP, either from the [Configuration API](http://www.thoughtworks.com/products/docs/go/current/help/Configuration_API.html) (provided you are a logged in Go Admin) or from a supplied URL. If you want to fetch directly from Go, then you should issue the ```Access-Control-Allow-Credentials: true``` header from your Go instance to ensure your browser is allowed to send your cookie credentials to Go. [See here for more info about Cross Origin Resource Sharing](http://enable-cors.org/server_apache.html).
+It works by fetching the configuration XML over HTTP, either from the [Configuration API](http://www.thoughtworks.com/products/docs/go/current/help/Configuration_API.html) (provided you are a logged in Go Admin) or from a supplied URL. It then extracts the declared dependencies into JSON and passes this to D3.js to be displayed as SVG. If you want to fetch directly from Go, then you should issue the ```Access-Control-Allow-Credentials: true``` header from your Go instance to ensure your browser is allowed to send your cookie credentials to Go. [See here for more info about Cross Origin Resource Sharing](http://enable-cors.org/server_apache.html).
 
 Since it makes a cross origin request, you need to be looking at the HTML page via a web server. A shell script is included to quickly get a server running using Python: see [start-http-server.sh](start-http-server.sh).
 
