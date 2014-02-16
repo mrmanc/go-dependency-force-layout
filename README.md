@@ -5,7 +5,7 @@ This is a tool to visualise the web of dependencies present in a large configura
 
 ![Example graph](/images/sample.png "Example graph")
 
-![circle](/images/pipeline.png "circle") Circles represent pipelines, ![square](/images/template.png "square") squares represent pipeline templates, and ![triangle](/images/source.png "triangle") triangles represent source code repositories. The size of each grows with more incoming dependencies. Pipelines in the same groups are coloured similarly.
+![circle](/images/pipeline.png "circle") Circles represent pipelines, ![square](/images/template.png "square") squares represent pipeline templates, and ![triangle](/images/source.png "triangle") triangles represent source code repositories. Arrows represent dependencies and the size of each shape grows with more incoming dependencies. Pipelines in the same groups are coloured similarly.
 
 It uses the excellent work of Mike Bostock on [D3.js](http://d3js.org/), adapted from a number of [his examples](http://bl.ocks.org/mbostock) (e.g. http://bl.ocks.org/mbostock/4062045).
 
