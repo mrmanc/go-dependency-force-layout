@@ -134,10 +134,10 @@ var drawGraph = function(graph) {
 		.append("marker")
 			.attr("id", function(d) { return d; })
 			.attr("viewBox", "0 -5 10 10")
-			.attr("refX", 15)
-			.attr("refY", -1.5)
-			.attr("markerWidth", 6)
-			.attr("markerHeight", 6)
+			.attr("refX", 10)
+			.attr("refY", 0)
+			.attr("markerWidth", 10)
+			.attr("markerHeight", 10)
 			.attr("orient", "auto")
 		.append("path")
 			.style("stroke", function(d) { return "grey"; })
@@ -190,7 +190,7 @@ function linkRespectingRadius(d) {
 
 	// Length of path from center of source node to center of target node
 	pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
-	radiusOfTarget=d.target.size+3
+	radiusOfTarget=d.target.size+7
 	// x and y distances from center to outside edge of target node
 	offsetX = (diffX * radiusOfTarget) / pathLength;
 	offsetY = (diffY * radiusOfTarget) / pathLength;
