@@ -1,6 +1,5 @@
 go-dependency-force-layout
 ==========================
-
 This is a tool to visualise the web of dependencies present in a large configuration of [ThoughtWorks’ Go system for continuous delivery](http://www.thoughtworks.com/products/go-continuous-delivery).
 
 ![Example graph](/images/sample.png "Example graph")
@@ -43,14 +42,14 @@ If, like me, yours does not fit on the screen, hit zoom out a few times and refr
 
 ## What's next?
 
-[x] Specify XML location in parameter
-[x] Add code to allow Cross Origin Resource Sharing
-[x] Add arrowheads to indicate direction of dependency
-[ ] Links to pipelines from nodes
-[ ] Bendy connectors like [this D3.js example](http://bl.ocks.org/GerHobbelt/3104394)
-[ ] Test Cross Origin Resource Sharing on a real Go server
-[ ] Provide obfuscated realistic example to play with
-[ ] Improve my butt ugly procedural JavaScript
-[ ] Use GitHub Pages to host the HTML file
-[ ] Add support for ‘compiled’ graphs with state persisted in the URL (like https://www.websequencediagrams.com/) to allow you to share with people who aren’t Go Admins
-[ ] Super secret cool next idea
+⊠ Specify XML location in parameter  
+⊠ Add code to allow Cross Origin Resource Sharing  
+⊠ Add arrowheads to indicate direction of dependency  
+◻ ‘Compiled’ graphs with data in the URL (like [Web Sequence Diagrams](https://www.websequencediagrams.com/)) to allow you to share without leaking config  
+◻ Links to pipelines from nodes  
+◻ Bendy connectors like [this D3.js example](http://bl.ocks.org/GerHobbelt/3104394)  
+◻ Test Cross Origin Resource Sharing on a real Go server  
+◻ Provide obfuscated realistic example to play with  
+◻ Improve my butt ugly procedural JavaScript  
+◻ Use GitHub Pages to host the HTML file  
+◻ Super secret cool next idea  
