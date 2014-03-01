@@ -37,10 +37,11 @@ GRAPH_DATA_PARAMETER='g'
 pipelines = []
 repositories = {}
 templates = {}
+packages = {}
 nodeLinks={}
 nodeLinks.links = {}
 nodeLinks.sizeOf = function (nodeIndex) { return nodeLinks.links[nodeIndex] ? nodeLinks.links[nodeIndex].length : 0 }
-function showLabels() { return getParameterByName('hide-labels') === null }
+function showLabels() { return getParameterByName('h') === null }
 
 if (getParameterByName('configUrl')) {
 	buildGraphFromXML()
@@ -51,6 +52,7 @@ else if (getParameterByName(GRAPH_DATA_PARAMETER)) {
 	repositories = decompressed.r
 	templates = decompressed.t
 	nodeLinks.links = decompressed.l
+	packages = decompressed.k
 }
 else {
 	buildGraphFromXML()
@@ -93,7 +95,8 @@ function buildGraphFromXML () {
 							materialNodeIndex = foundPipeline(materialName, groupName, nodes, groups)
 						}
 						else if (material.tagName==='package') {
-							// do something here
+							var packageId = material.getAttribute('ref')
+							materialNodeIndex = foundPackage(packageId, nodes)
 						}
 						else {
 							materialName = material.getAttribute('url')
@@ -116,31 +119,24 @@ function foundGroup (groupName, groups) {
 }
 function foundPipeline(pipelineName, groupName, nodes, groups) {
 	var groupNumber=foundGroup(groupName, groups)
-	if (showLabels()) {
-		var newNodeAction = function(nodeIndex) { pipelines.push([nodeIndex, groupNumber, pipelineName]) }
-	}
-	else {
-		var newNodeAction = function(nodeIndex) { pipelines.push([nodeIndex, groupNumber, ""]) }
-	}
+	var nodeLabel = showLabels() ? pipelineName : ""
+	var newNodeAction = function(nodeIndex) { pipelines.push([nodeIndex, groupNumber, nodeLabel]) }
 	return indexOfNode(pipelineName, newNodeAction, nodes)
 }
 function foundRepo(repoUrl, repoType, nodes) {
-	if (showLabels()) {
-		var newNodeAction = function(repoNodeIndex) { repositories[repoNodeIndex]=repoUrl }
-	}
-	else {
-		var newNodeAction = function(repoNodeIndex) { repositories[repoNodeIndex]="" }
-	}
+	var nodeLabel = showLabels() ? repoUrl : ""
+	var newNodeAction = function(repoNodeIndex) { repositories[repoNodeIndex]=nodeLabel }
 	return indexOfNode(repoUrl, newNodeAction, nodes)
 }
 function foundTemplatePipeline(templateName, nodes) {
-	if (showLabels()) {
-		var newNodeAction = function(nodeIndex) { templates[nodeIndex]=templateName }
-	}
-	else {
-		var newNodeAction = function(nodeIndex) { templates[nodeIndex]="" }
-	}
+	var nodeLabel = showLabels() ? templateName : ""
+	var newNodeAction = function(nodeIndex) { templates[nodeIndex]=nodeLabel }
 	return indexOfNode(templateName, newNodeAction, nodes)
+}
+function foundPackage(packageId, nodes) {
+	var nodeLabel = showLabels() ? packageId : ""
+	var newNodeAction = function(nodeIndex) { packages[nodeIndex]=nodeLabel }
+	return indexOfNode(packageId, newNodeAction, nodes)
 }
 function indexOfNode(name, newNodeAction, nodes) {
 	if (nodes.indexOf(name) < 0) {
@@ -157,16 +153,16 @@ function decompressFromString(compressed) {
 	return JSON.parse(new JSZip().load(compressed, {base64: true, compression:"deflate"}).file('object').asText());
 }
 
-console.log("compressed: "+compressToString({p:pipelines, r: repositories, t: templates, l: nodeLinks.links}).length)
-console.log("decompressed length " + JSON.stringify({p:pipelines, r: repositories, t: templates, l: nodeLinks.links}).length)
-
 var graph = {'nodes': [], 'links': []}
 
 for (var index in templates) {
 	graph.nodes[index]={'name': templates[index], 'group': 'templates', 'shape': 'square', 'size': nodeLinks.sizeOf(index)}
 }
 for (var index in repositories) {
-	graph.nodes[index]={'name': repositories[index], 'group': 'repo', 'shape': 'triangle-up', 'size': nodeLinks.sizeOf(index)}
+	graph.nodes[index]={'name': repositories[index], 'group': 'repositories', 'shape': 'triangle-up', 'size': nodeLinks.sizeOf(index)}
+}
+for (var index in packages) {
+	graph.nodes[index]={'name': packages[index], 'group': 'packages', 'shape': 'triangle-down', 'size': nodeLinks.sizeOf(index)}
 }
 for (var index=0; index < pipelines.length; index++) {
 	var pipeline = pipelines[index]
@@ -177,18 +173,18 @@ for (var target in nodeLinks.links) {
 		graph.links.push({'source': nodeLinks.links[target][sourceIndex], 'target': parseInt(target)})
 	}
 }
-shareLinkUrl = '?'+GRAPH_DATA_PARAMETER+'='+encodeURIComponent(compressToString({p:pipelines, r: repositories, t: templates, l: nodeLinks.links}))
+shareLinkUrl = '?'+GRAPH_DATA_PARAMETER+'='+encodeURIComponent(compressToString({p:pipelines, r: repositories, t: templates, l: nodeLinks.links, k: packages}))
 var labelsControl
 if (showLabels()) {
 	if (document.location.search.length === 0) {
-		labelsControl = '<a href="' + document.location + '?hide-labels=true">hide labels</a>'
+		labelsControl = '<a href="' + document.location + '?h=true">hide labels</a>'
 	}
 	else {
-		labelsControl = '<a href="' + document.location + '&hide-labels=true">hide labels</a>'
+		labelsControl = '<a href="' + document.location + '&h=true">hide labels</a>'
 	}
 }
 else {
-	labelsControl = '<a href="' + String(document.location).replace(/[?&]hide-labels=true/,'') + '">show labels</a>'
+	labelsControl = '<a href="' + String(document.location).replace(/[?&]h=true/,'') + '">show labels</a>'
 }
 
 document.getElementById('graph-link-placeholder').innerHTML += labelsControl
@@ -319,4 +315,4 @@ drawGraph(graph);
 
 </script>
 <p>Legend: Triangles are source code repositories, circles are pipelines, squares are pipeline templates. Lines indicate dependencies.</p>
-<p>Developed from <a href="http://bl.ocks.org/mbostock">Mike Bostock's Force Directed Graph examples</a></p>
+<p>Developed from <a href="http://bl.ocks.org/mbostock">Mike Bostock's Force Directed Graph examples</a>.</p>
