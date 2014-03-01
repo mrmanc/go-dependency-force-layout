@@ -19,70 +19,78 @@ body {
 #graph-link-placeholder {
 	position: absolute;
 	right: 0;
-	width: 10em;
+	width: 25em;
 	text-align: right;
 	background-color: white;
 }
 
 </style>
 <body>
-<div id="graph-link-placeholder">Hello</div>
-<script src='jszip.min.js'></script>
-<!--script src="http://d3js.org/d3.v3.min.js"></script-->
-<script src="d3.v3.min.js"></script>
+<div id="graph-link-placeholder">&nbsp;</div>
+<script src='http://stuk.github.io/jszip/dist/jszip.min.js'></script>
+<!--script src='jszip.min.js'></script-->
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<!--script src="d3.v3.min.js"></script-->
 <script>
-nodes = {}
-links = [] // change this to use node indexes
-// Then we shouldn't need to create do another pass on the nodes later to generate the links
-// Get rid of the extra node collections as we won't need them
-// Make sure everything is indexed on node number
-// Then perhaps try not storing the node names?
-typedLinks = []
-sizes = {}
-nodeIndexes = {}
-nodesFound = 0
-pipelineIndexes = {}
-pipelines = {}
-groups = []
-repos = []
-repoTypes = {}
-pipelineTemplates = []
-xmlDoc=loadConfigDocument();
-var pipelineGroups=xmlDoc.getElementsByTagName("pipelines")
-var templates=xmlDoc.getElementsByTagName("templates")[0].getElementsByTagName("pipeline")
 
-buildGraph(pipelineGroups, templates)
-function buildGraph (pipelineGroups, templates) {
+GRAPH_DATA_PARAMETER='g'
+pipelines = []
+repositories = {}
+templates = {}
+nodeLinks={}
+nodeLinks.links = {}
+nodeLinks.sizeOf = function (nodeIndex) { return nodeLinks.links[nodeIndex] ? nodeLinks.links[nodeIndex].length : 0 }
+function showLabels() { return getParameterByName('hide-labels') === null }
 
-	for(templateIndex=0; templateIndex < templates.length; templateIndex++) {
-		foundTemplate(templates[templateIndex].getAttribute('name'), nodes)
+if (getParameterByName('configUrl')) {
+	buildGraphFromXML()
+}
+else if (getParameterByName(GRAPH_DATA_PARAMETER)) {
+	var decompressed = decompressFromString(getParameterByName(GRAPH_DATA_PARAMETER))
+	pipelines = decompressed.p
+	repositories = decompressed.r
+	templates = decompressed.t
+	nodeLinks.links = decompressed.l
+}
+else {
+	buildGraphFromXML()
+}
+
+function buildGraphFromXML () {
+	var nodes = [], 
+		groups = [], 
+		xmlDoc=loadConfigDocument(), 
+		pipelineGroups=xmlDoc.getElementsByTagName("pipelines"),
+		templatePipelineElements=xmlDoc.getElementsByTagName("templates")[0].getElementsByTagName("pipeline")
+
+	for(templateIndex=0; templateIndex < templatePipelineElements.length; templateIndex++) {
+		foundTemplatePipeline(templatePipelineElements[templateIndex].getAttribute('name'), nodes)
 	}
 	for(groupIndex=0; groupIndex < pipelineGroups.length; groupIndex++) {
-		var pipelineGroup = pipelineGroups[groupIndex]
-		var groupNodeIndex = foundGroup(pipelineGroup.getAttribute('group'))
-		var pipelines=pipelineGroup.getElementsByTagName('pipeline')
+		var pipelineGroup = pipelineGroups[groupIndex],
+			groupName = pipelineGroup.getAttribute('group'),
+			pipelines = pipelineGroup.getElementsByTagName('pipeline')
+		foundGroup(groupName, groups)
 		for(var pipelineIndex=0; pipelineIndex < pipelines.length; pipelineIndex++) {
 
-			var pipeline = pipelines[pipelineIndex]
-			var pipelineName=pipeline.getAttribute('name')
+			var pipeline = pipelines[pipelineIndex],
+				pipelineName=pipeline.getAttribute('name')
 			if (pipelineName) {
-				var pipelineNodeIndex = foundPipeline(pipelineName, pipelineGroup.getAttribute('group'), nodes)
+				var pipelineNodeIndex = foundPipeline(pipelineName, groupName, nodes, groups)
 				if (pipeline.getAttribute('template')) {
-					var templateNodeIndex = foundTemplate(pipeline.getAttribute('template'), nodes)
-					typedLinks.push({source: pipelineName, targetType: 'template', targetName: pipeline.getAttribute('template')})
-					links.push([pipelineName, pipeline.getAttribute('template')])
-					sizes[templateNodeIndex]++
+					var templateNodeIndex = foundTemplatePipeline(pipeline.getAttribute('template'), nodes)
+					linkFrom(pipelineNodeIndex, templateNodeIndex)
 				}
-				if (pipeline.getElementsByTagName('materials')[0]) {
-					var materials=pipeline.getElementsByTagName('materials')[0].children
+				var materialsTag = pipeline.getElementsByTagName('materials')[0]
+				if (materialsTag) {
+					var materials=materialsTag.children
 					for (materialIndex=0; materialIndex < materials.length; materialIndex++) {
-						var material=materials[materialIndex]
-						var materialName
-						var materialNodeIndex = -1
+						var material=materials[materialIndex],
+							materialName,
+							materialNodeIndex = -1
 						if (material.tagName==='pipeline') {
 							materialName=material.getAttribute('pipelineName')
-							materialNodeIndex = foundPipeline(material.getAttribute('pipelineName'), pipelineGroup.getAttribute('group'), nodes)
-							typedLinks.push({source: pipelineName, targetType: 'pipeline', targetName: material.getAttribute('pipelineName')})
+							materialNodeIndex = foundPipeline(materialName, groupName, nodes, groups)
 						}
 						else if (material.tagName==='package') {
 							// do something here
@@ -90,102 +98,107 @@ function buildGraph (pipelineGroups, templates) {
 						else {
 							materialName = material.getAttribute('url')
 							materialNodeIndex = foundRepo(materialName, material.tagName, nodes)
-							typedLinks.push({source: pipelineName, targetType: 'repo', targetName: materialName})
 						}
-						links.push([pipelineName, materialName])
-						sizes[materialNodeIndex]++
+						linkFrom(pipelineNodeIndex, materialNodeIndex)
 					}
 				}
 			}
 		}
 	}
 }
-function foundGroup (pipelineGroup) {
-	groups.push(pipelineGroup)
-	pipelines[groups.indexOf(pipelineGroup)]=[]
+function linkFrom(sourceNodeIndex, targetNodeIndex) {
+	if (!nodeLinks.links[targetNodeIndex]) nodeLinks.links[targetNodeIndex]=[]
+	nodeLinks.links[targetNodeIndex].push(sourceNodeIndex)
 }
-function foundPipeline(pipelineName, pipelineGroup, nodes) {
-	if (groups.indexOf(pipelineGroup) < 0) groups.push(pipelineGroup)
-	if (!pipelineIndexes[pipelineName]) {
-		pipelines[groups.indexOf(pipelineGroup)].push(pipelineName)
-		pipelineIndexes[pipelineName]=pipelineIndexes.length
-		groups[pipelineName]=pipelineGroup
+function foundGroup (groupName, groups) {
+	if (groups.indexOf(groupName) < 0) groups.push(groupName)
+	return groups.indexOf(groupName)
+}
+function foundPipeline(pipelineName, groupName, nodes, groups) {
+	var groupNumber=foundGroup(groupName, groups)
+	if (showLabels()) {
+		var newNodeAction = function(nodeIndex) { pipelines.push([nodeIndex, groupNumber, pipelineName]) }
 	}
-	return foundNode(pipelineName, pipelineGroup, 'circle', nodes)
+	else {
+		var newNodeAction = function(nodeIndex) { pipelines.push([nodeIndex, groupNumber, ""]) }
+	}
+	return indexOfNode(pipelineName, newNodeAction, nodes)
 }
 function foundRepo(repoUrl, repoType, nodes) {
-	if (repos.indexOf(repoUrl) < 0) {
-		repos.push(repoUrl)
-		repoTypes[repoUrl]=repoType
+	if (showLabels()) {
+		var newNodeAction = function(repoNodeIndex) { repositories[repoNodeIndex]=repoUrl }
 	}
-	return foundNode(repoUrl, repoType, 'triangle-up', nodes)
+	else {
+		var newNodeAction = function(repoNodeIndex) { repositories[repoNodeIndex]="" }
+	}
+	return indexOfNode(repoUrl, newNodeAction, nodes)
 }
-function foundTemplate(templateName, nodes) {
-	if (pipelineTemplates.indexOf(templateName) < 0) pipelineTemplates.push(templateName)
-	return foundNode(templateName, 'templates', 'triangle-up', nodes)
+function foundTemplatePipeline(templateName, nodes) {
+	if (showLabels()) {
+		var newNodeAction = function(nodeIndex) { templates[nodeIndex]=templateName }
+	}
+	else {
+		var newNodeAction = function(nodeIndex) { templates[nodeIndex]="" }
+	}
+	return indexOfNode(templateName, newNodeAction, nodes)
 }
-
-linkIndices={}
-for (linkIndex=0;linkIndex<typedLinks.length;linkIndex++) {
-	link=typedLinks[linkIndex]
-	sourceIndex=parseInt(pipelineIndexes[link.source])
-	if (!linkIndices[sourceIndex]) {linkIndices[sourceIndex]=[]}
-	if (link.targetType==='pipeline') {
-		linkIndices[sourceIndex].push(parseInt(pipelineIndexes[link.targetName]))
-	}	
-	else if (link.targetType==='repo') {
-		linkIndices[sourceIndex].push(pipelineIndexes.length+parseInt(repos.indexOf(link.targetName)))
+function indexOfNode(name, newNodeAction, nodes) {
+	if (nodes.indexOf(name) < 0) {
+		nodes.push(name)
+		newNodeAction(nodes.indexOf(name))
 	}
-	else if (link.targetType==='template') {
-		linkIndices[sourceIndex].push(pipelineIndexes.length+repos.length+parseInt(pipelineTemplates.indexOf(link.targetName)))
-	}
-	else { console.error('unrecognised link type') }
-}
-dependencies={p:pipelines, r: repos, t: pipelineTemplates, l: linkIndices}
-////console.log("dependencies:\n" + encodeURIComponent(graph))
-//console.log("plain  length: " + JSON.stringify(dependencies))
-// compressed = new JSZip().file('dependencies', JSON.stringify(dependencies)).generate({type:"base64", compression:"deflate"})
-// console.log("compressed: "+compressed.length)
-// decompressed = new JSZip().load(compressed, {base64: true, compression:"deflate"}).file('dependencies').asText();
-// console.log("decompressed length " + decompressed.length)
-
-var sizesFromDependencies = {}
-
-for (linkIndex=0;linkIndex<dependencies.l.length;linkIndex++) {
-	var linkTargets=dependencies.l[linkIndex]
-	for (targetIndex=0; targetIndex<linkTargets.length; targetIndex++) {
-		target=linkTargets[targetIndex]
-		if (sizesFromDependencies.indexOf(target) < 0) sizesFromDependencies[target]=0
-		sizesFromDependencies[target]++
-	}
+	return nodes.indexOf(name);
 }
 
+function compressToString(object) {
+	return new JSZip().file('object', JSON.stringify(object)).generate({type:"base64", compression:"deflate"})
+}
+function decompressFromString(compressed) {
+	return JSON.parse(new JSZip().load(compressed, {base64: true, compression:"deflate"}).file('object').asText());
+}
 
+console.log("compressed: "+compressToString({p:pipelines, r: repositories, t: templates, l: nodeLinks.links}).length)
+console.log("decompressed length " + JSON.stringify({p:pipelines, r: repositories, t: templates, l: nodeLinks.links}).length)
 
 var graph = {'nodes': [], 'links': []}
 
-// 
-// for (pipelineIndex=0;pipelineIndex<dependencies.p.length;pipelineIndex++) {
-// 	var pipeline=dependencies.p[pipelineIndex]
-// 	graph.nodes.push({'name': pipeline.name, 'group': pipeline.group, 'shape': 'circle', 'size': sizesFromDependencies[pipelineIndex]})
-// }
-// for (repoIndex=0;repoIndex<dependencies.r.length;repoIndex++) {
-// 	var repo=dependencies.r[repoIndex]
-// 	graph.nodes.push({'name': repo.name, 'group': pipeline.group, 'shape': 'circle', 'size': sizesFromDependencies[pipelineIndex]})
-// }
-
-console.log(sizes)
-for (nodeIndex=0;nodeIndex<nodesFound;nodeIndex++) {
-	var node=nodes[nodeIndex]
-	console.log("node is " + node)
-	graph.nodes.push({'name': node.name, 'group': node.group, 'shape': node.shape, 'size': sizes[nodeIndex]})
+for (var index in templates) {
+	graph.nodes[index]={'name': templates[index], 'group': 'templates', 'shape': 'square', 'size': nodeLinks.sizeOf(index)}
 }
-for (linkIndex=0;linkIndex<links.length;linkIndex++) {
-	var sourceName=links[linkIndex][0], targetName=links[linkIndex][1]
-	graph.links.push({'source': nodeIndexes[sourceName], 'target': nodeIndexes[targetName]})
+for (var index in repositories) {
+	graph.nodes[index]={'name': repositories[index], 'group': 'repo', 'shape': 'triangle-up', 'size': nodeLinks.sizeOf(index)}
+}
+for (var index=0; index < pipelines.length; index++) {
+	var pipeline = pipelines[index]
+	graph.nodes[pipeline[0]]={'name': pipeline[2], 'group': pipeline[1], 'shape': 'circle', 'size': nodeLinks.sizeOf(pipeline[0])}
+}
+for (var target in nodeLinks.links) {
+	for (var sourceIndex=0; sourceIndex < nodeLinks.links[target].length; sourceIndex++) {
+		graph.links.push({'source': nodeLinks.links[target][sourceIndex], 'target': parseInt(target)})
+	}
+}
+shareLinkUrl = '?'+GRAPH_DATA_PARAMETER+'='+encodeURIComponent(compressToString({p:pipelines, r: repositories, t: templates, l: nodeLinks.links}))
+var labelsControl
+if (showLabels()) {
+	if (document.location.search.length === 0) {
+		labelsControl = '<a href="' + document.location + '?hide-labels=true">hide labels</a>'
+	}
+	else {
+		labelsControl = '<a href="' + document.location + '&hide-labels=true">hide labels</a>'
+	}
+}
+else {
+	labelsControl = '<a href="' + String(document.location).replace(/[?&]hide-labels=true/,'') + '">show labels</a>'
 }
 
-document.getElementById('graph-link-placeholder').innerHTML = '<a href="?dependencies='+encodeURIComponent(JSON.stringify(graph))+'">share link</a>';
+document.getElementById('graph-link-placeholder').innerHTML += labelsControl
+var CHROME_URL_LIMIT = 10000
+if (shareLinkUrl.length < CHROME_URL_LIMIT) {
+	document.getElementById('graph-link-placeholder').innerHTML += '&nbsp;<a href="'+shareLinkUrl+'">share graph</a>&nbsp;';
+}
+else {
+	document.getElementById('graph-link-placeholder').innerHTML += '&nbsp;too big to share. try hiding labels.';
+}
 function loadConfigDocument() {
 	SYNCHRONOUS=false
 	if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
@@ -201,16 +214,6 @@ function loadConfigDocument() {
 	xmlHttp.send();
 	return xmlHttp.responseXML;
 }
-function foundNode(name, group, shape, nodes) {
-	var nodeIndex = nodeIndexes[name]
-	if (! nodeIndex) {
-		nodeIndex=nodesFound ++
-		nodeIndexes[name]=nodeIndex
-		nodes[nodeIndex] = {'name': name, 'group': group, 'shape': shape}
-		sizes[nodeIndex]=0
-	}
-	return nodeIndex;
-}
 function getParameterByName(name, url) {
 	var url = typeof url !== 'undefined' ? url : window.location.href
 	name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
@@ -218,7 +221,7 @@ function getParameterByName(name, url) {
 	var regex = new RegExp(regexS);
 	var results = regex.exec(url);
 	if(results == null)
-		return "";
+		return null;
 	else
 		return decodeURIComponent(results[1].replace(/\+/g, " "));
 }
