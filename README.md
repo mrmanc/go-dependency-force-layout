@@ -2,9 +2,9 @@ go-dependency-force-layout
 ==========================
 This is a tool to visualise the web of dependencies present in a large configuration of [ThoughtWorks’ Go system for continuous delivery](http://www.thoughtworks.com/products/go-continuous-delivery).
 
-![Example graph](/images/sample.png "Example graph")
+![Example graph](/readmeimages/sample.png "Example graph")
 
-![circle](/images/pipeline.png "circle") Circles represent pipelines, ![square](/images/template.png "square") squares represent pipeline templates, and ![triangle](/images/source.png "triangle") triangles represent source code repositories. Arrows represent dependencies and the size of each shape grows with more incoming dependencies. Pipelines in the same groups are coloured similarly.
+![circle](/readmeimages/pipeline.png "circle") Circles represent pipelines, ![square](/readmeimages/template.png "square") squares represent pipeline templates, and ![triangle](/readmeimages/source.png "triangle") triangles represent source code repositories. Arrows represent dependencies and the size of each shape grows with more incoming dependencies. Pipelines in the same groups are coloured similarly.
 
 ## How it works
 
@@ -38,7 +38,7 @@ You can only go back as far as your upgrade to v2.2 though as that is when versi
 
 If, like me, yours does not fit on the screen, hit zoom out a few times and refresh the page.
 
-![Larger example graph](/images/large.jpg "Larger example graph")
+![Larger example graph](/readmeimages/large.jpg "Larger example graph")
 
 ## What's next?
 
