@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Go-dependency-force-layout : " />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Go-dependency-force-layout</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/mrmanc/go-dependency-force-layout">View on GitHub</a>
+
+          <h1 id="project_title">Go-dependency-force-layout</h1>
+          <h2 id="project_tagline"></h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/mrmanc/go-dependency-force-layout/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/mrmanc/go-dependency-force-layout/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="go-dependency-force-layout" class="anchor" href="#go-dependency-force-layout"><span class="octicon octicon-link"></span></a>go-dependency-force-layout</h1>
+
+<p>This is a tool to visualise the web of dependencies present in a large configuration of <a href="http://www.thoughtworks.com/products/go-continuous-delivery">ThoughtWorks’ Go system for continuous delivery</a>.</p>
+
+<p><img src="/images/sample.png" alt="Example graph" title="Example graph"></p>
+
+<p><img src="/images/pipeline.png" alt="circle" title="circle"> Circles represent pipelines, <img src="/images/template.png" alt="square" title="square"> squares represent pipeline templates, and <img src="/images/source.png" alt="triangle" title="triangle"> triangles represent source code repositories. Arrows represent dependencies and the size of each shape grows with more incoming dependencies. Pipelines in the same groups are coloured similarly.</p>
+
+<h2>
+<a name="how-it-works" class="anchor" href="#how-it-works"><span class="octicon octicon-link"></span></a>How it works</h2>
+
+<p>It uses the excellent work of Mike Bostock on <a href="http://d3js.org/">D3.js</a>, adapted from a number of <a href="http://bl.ocks.org/mbostock">his examples</a> (e.g. <a href="http://bl.ocks.org/mbostock/4062045">http://bl.ocks.org/mbostock/4062045</a>).</p>
+
+<p>It works by fetching the configuration XML over HTTP, either from the <a href="http://www.thoughtworks.com/products/docs/go/current/help/Configuration_API.html">Configuration API</a> (provided you are a logged in Go Admin) or from a supplied URL. It then extracts the declared dependencies into JSON and passes this to D3.js to be displayed as SVG. If you want to fetch directly from Go, then you should issue the <code>Access-Control-Allow-Credentials: true</code> header from your Go instance to ensure your browser is allowed to send your cookie credentials to Go. <a href="http://enable-cors.org/server_apache.html">See here for more info about Cross Origin Resource Sharing</a>.</p>
+
+<h2>
+<a name="getting-started" class="anchor" href="#getting-started"><span class="octicon octicon-link"></span></a>Getting Started</h2>
+
+<p>Since it makes a cross origin request, you need to be looking at the HTML page via a web server. A shell script is included to quickly get a server running using Python: see <a href="start-http-server.sh">start-http-server.sh</a>.</p>
+
+<p>Simply point the page at the configuration XML by supplying a configUrl parameter like this:</p>
+
+<pre><code>http://localhost:8081/pipeline-dependencies.html?configUrl=http://yourgoserver/go/admin/config_xml
+</code></pre>
+
+<p>It will default to the included <a href="sample.xml">sample.xml</a> if you do not supply the parameter, to give you an idea of how it works.</p>
+
+<h1>
+<a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why?</h1>
+
+<p>I built this to see if it could help me understand how our organisation was using Go, and it proved very enlightening.</p>
+
+<p>I also found it interesting to look at previous historical versions of the configuration, which you can get at using the <a href="http://www.thoughtworks.com/products/docs/go/current/help/Configuration_API.html">Go configuration API</a> provided you know the MD5 hash. If you don't, you can use git to query the configuration git repository on the server itself, using something like this:</p>
+
+<pre><code>git --git-dir=/data/go/db/config.git/.git/ log | tail -100
+</code></pre>
+
+<p>You can only go back as far as your upgrade to v2.2 though as that is when version control was brought in.</p>
+
+<p>If, like me, yours does not fit on the screen, hit zoom out a few times and refresh the page.</p>
+
+<p><img src="/images/large.jpg" alt="Larger example graph" title="Larger example graph"></p>
+
+<h2>
+<a name="whats-next" class="anchor" href="#whats-next"><span class="octicon octicon-link"></span></a>What's next?</h2>
+
+<p>⊠ Specify XML location in parameter<br>
+⊠ Add code to allow Cross Origin Resource Sharing<br>
+⊠ Add arrowheads to indicate direction of dependency<br>
+⊠ ‘Compiled’ graphs with data in the URL (like <a href="https://www.websequencediagrams.com/">Web Sequence Diagrams</a>) to allow you to share without leaking config<br>
+⊠ Compress compiled dependency data to shorten the URL
+⊠ Hiding of labels for sharing
+◻ Replace ugly URL parsing with a decent library
+◻ Fix bug where you can ‘show’ labels on a shared chart with no labels
+◻ Links to pipelines from nodes<br>
+◻ Bendy connectors like <a href="http://bl.ocks.org/GerHobbelt/3104394">this D3.js example</a><br>
+◻ Test Cross Origin Resource Sharing on a real Go server<br>
+◻ Provide obfuscated realistic example to play with<br>
+◻ Improve my butt ugly procedural JavaScript<br>
+◻ Use GitHub Pages to host the HTML file<br>
+◻ Super secret cool next idea  </p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Go-dependency-force-layout maintained by <a href="https://github.com/mrmanc">mrmanc</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
