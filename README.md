@@ -8,6 +8,6 @@ This is a tool to visualise the web of dependencies present in a large configura
 
 ## More
 
-Read more (including instructions to create your own) on the project website, or take a look at [an example built from our pipeline definitions.](http://mrmanc.github.io/go-dependency-force-layout/pipeline-dependencies.html?u=http://mrmanc.github.io/go-dependency-force-layout/examples/27012014.json)
+Read more (including instructions to create your own) on the [project website](http://mrmanc.github.io/go-dependency-force-layout/), or take a look at [an example built from our pipeline definitions.](http://mrmanc.github.io/go-dependency-force-layout/pipeline-dependencies.html?u=http://mrmanc.github.io/go-dependency-force-layout/examples/27012014.json)
 
 ![Larger example graph](readmeimages/large.jpg "Larger example graph")
