@@ -50,12 +50,12 @@ If, like me, yours does not fit on the screen, hit zoom out a few times and refr
 ⊠ ‘Compiled’ graphs with data in the URL (like [Web Sequence Diagrams](https://www.websequencediagrams.com/)) to allow you to share without leaking config  
 ⊠ Compress compiled dependency data to shorten the URL
 ⊠ Hiding of labels for sharing
+⊠ Provide obfuscated realistic example to play with  
+⊠ Use GitHub Pages to host the HTML file  
 ◻ Replace ugly URL parsing with a decent library
 ◻ Fix bug where you can ‘show’ labels on a shared chart with no labels
 ◻ Links to pipelines from nodes  
 ◻ Bendy connectors like [this D3.js example](http://bl.ocks.org/GerHobbelt/3104394)  
 ◻ Test Cross Origin Resource Sharing on a real Go server  
-◻ Provide obfuscated realistic example to play with  
 ◻ Improve my butt ugly procedural JavaScript  
-◻ Use GitHub Pages to host the HTML file  
 ◻ Super secret cool next idea  
