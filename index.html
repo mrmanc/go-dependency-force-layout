@@ -33,31 +33,55 @@
       <section id="main_content" class="inner">
 <p>This is a tool to visualise the web of dependencies present in a large configuration of <a href="http://www.thoughtworks.com/products/go-continuous-delivery">ThoughtWorks’ Go system for continuous delivery</a>.</p>
 
-<p><img src="readmeimages/sample.png" alt="Example graph" title="Example graph"></p>
+<p><a href="http://mrmanc.github.io/go-dependency-force-layout/pipeline-dependencies.html?u=http://mrmanc.github.io/go-dependency-force-layout/examples/27012014.json">Skip to an example built from our pipeline definitions.</a><p/>
 
-<p><img src="readmeimages/pipeline.png" alt="circle" title="circle"> Circles represent pipelines, <img src="readmeimages/template.png" alt="square" title="square"> squares represent pipeline templates, and <img src="readmeimages/source.png" alt="triangle" title="triangle"> triangles represent source code repositories. Arrows represent dependencies and the size of each shape grows with more incoming dependencies. Pipelines in the same groups are coloured similarly.</p>
+<p><img src="readmeimages/large.jpg" alt="Larger example graph" title="Larger example graph"></p>
 
-<h2>
-<a name="how-it-works" class="anchor" href="#how-it-works"><span class="octicon octicon-link"></span></a>How it works</h2>
+<p><img src="readmeimages/sample.png" alt="Example graph" title="Example graph" style="float: right;"><img src="readmeimages/pipeline.png" alt="circle" title="circle"> Circles represent pipelines<br />
+<img src="readmeimages/template.png" alt="square" title="square"> squares represent pipeline templates<br />
+<img src="readmeimages/source.png" alt="triangle" title="triangle"> triangles represent source code repositories.
+</p>
+
+<p>Arrows represent dependencies and the size of each shape grows with more incoming dependencies. Pipelines in the same groups are coloured similarly.</p>
 
 <p>It uses the excellent work of Mike Bostock on <a href="http://d3js.org/">D3.js</a>, adapted from a number of <a href="http://bl.ocks.org/mbostock">his examples</a> (e.g. <a href="http://bl.ocks.org/mbostock/4062045">http://bl.ocks.org/mbostock/4062045</a>).</p>
 
-<p>It works by fetching the configuration XML over HTTP, either from the <a href="http://www.thoughtworks.com/products/docs/go/current/help/Configuration_API.html">Configuration API</a> (provided you are a logged in Go Admin) or from a supplied URL. It then extracts the declared dependencies into JSON and passes this to D3.js to be displayed as SVG. If you want to fetch directly from Go, then you should issue the <code>Access-Control-Allow-Credentials: true</code> header from your Go instance to ensure your browser is allowed to send your cookie credentials to Go. <a href="http://enable-cors.org/server_apache.html">See here for more info about Cross Origin Resource Sharing</a>.</p>
+<p>It works by fetching the configuration XML over HTTP, either from the <a href="http://www.thoughtworks.com/products/docs/go/current/help/Configuration_API.html">Configuration API</a> (provided you are a logged in Go Admin) or from a supplied URL. It then extracts the declared dependencies into JSON and passes this to D3.js to be displayed as SVG.</p>
 
 <h2>
 <a name="getting-started" class="anchor" href="#getting-started"><span class="octicon octicon-link"></span></a>Getting Started</h2>
 
-<p>Since it makes a cross origin request, you need to be looking at the HTML page via a web server. A shell script is included to quickly get a server running using Python: see <a href="start-http-server.sh">start-http-server.sh</a>.</p>
+<p>Use the <a href="pipeline-dependencies.html">hosted HTML page</a> to explore your dependencies. It can build the graph in three ways: fetching and parsing the XML, using graph data encoded into the URL or from a generated JSON file hosted remotely. Here are instructions (with the easiest first):</p>
 
-<p>Simply point the page at the configuration XML by supplying a configUrl parameter like this:</p>
+<h3>Sharing graphs as URLs</h3>
+
+Once you've built the graph, a link will appear at the top right which contains the JSON metadata compressed and encoded. For large graphs the compressed data may be too large for some browsers to show, so I've set a hard limit of 10k characters (the limit of Chrome's omnibox) beyond which you’ll see message suggesting you try hiding labels. With the labels hidden the link it generates will not contain the labels, so is safe to share with the public.
+
+<h3>Fetching XML from Go</h3>
+
+<p>Simply point to the configuration XML by supplying a configUrl parameter like this:</p>
 
 <pre><code>http://localhost:8081/pipeline-dependencies.html?configUrl=http://yourgoserver/go/admin/config_xml
 </code></pre>
 
-<p>It will default to the included <a href="sample.xml">sample.xml</a> if you do not supply the parameter, to give you an idea of how it works.</p>
+<p>Since it makes cross origin requests, you'll need to make sure the target server (Go / JSON location) authorises this page as an origin, using the <code>Access-Control-Allow-Origin: http://mrmanc.github.io</code> header.<p>
 
-<h1>
-<a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why?</h1>
+<p>You’ll also need to issue the <code>Access-Control-Allow-Credentials: true</code> header from your Go instance to ensure your browser is allowed to send your cookie credentials to Go (as fetching config is privilidged). <a href="http://enable-cors.org/server_apache.html">Read more about Cross Origin Resource Sharing</a></p>
+
+<h3>Loading graphs from JSON files</h3>
+
+<p>If you have problems with long URLs you may wish to load the graph data from JSON. Currently you’ll need to do this by hosting the JSON file somewhere and telling the page where to find it, by supplying it’s address as a parameter called ‘u’ like this: <code>http://mrmanc.github.io/go-dependency-force-layout/pipeline-dependencies.html?u=http://mrmanc.github.io/go-dependency-force-layout/examples/27012014.json</code>.</p>
+
+<p>Your JSON location will need to issue the <code>Access-Control-Allow-Origin: http://mrmanc.github.io</code> header. At some point I will make it possible to save the JSON generated by the page, and load graphs without hosting JSON files remotely.</p>
+
+<h2>Hosting your own HTML</h2>
+
+<p>If you want to clone the project and use the page offline, or you don’t want to fiddle with cross origin headers, you’ll need to start a local web server. Using a file:// url will not work. A shell script is included to quickly get a server running using Python: see <a href="start-http-server.sh">start-http-server.sh</a>.</p>
+
+<p>The tool will default to the included <a href="sample.xml">sample.xml</a> if you do not supply the parameter, to give you an idea of how it works.</p>
+
+<h2>
+<a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why do this?</h2>
 
 <p>I built this to see if it could help me understand how our organisation was using Go, and it proved very enlightening.</p>
 
@@ -72,8 +96,6 @@
 
 <p><a href="http://mrmanc.github.io/go-dependency-force-layout/pipeline-dependencies.html?u=http://mrmanc.github.io/go-dependency-force-layout/examples/27012014.json">Here is a link to an example built from our pipeline definitions.</a><p/>
 
-<p><img src="readmeimages/large.jpg" alt="Larger example graph" title="Larger example graph"></p>
-
 <h2>
 <a name="whats-next" class="anchor" href="#whats-next"><span class="octicon octicon-link"></span></a>What's next?</h2>
 
@@ -85,12 +107,15 @@
 ⊠ Hiding of labels for sharing<br>
 ⊠ Provide obfuscated realistic example to play with<br>
 ⊠ Use GitHub Pages to host the HTML file<br>
+◻ Allow user to copy / save generated JSON to share with others<br>
+◻ Allow user to open generated JSON pasted in<br>
 ◻ Replace ugly URL parsing with a decent library<br>
 ◻ Fix bug where you can ‘show’ labels on a shared chart with no labels<br>
 ◻ Links to pipelines from nodes<br>
 ◻ Bendy connectors like <a href="http://bl.ocks.org/GerHobbelt/3104394">this D3.js example</a><br>
 ◻ Test Cross Origin Resource Sharing on a real Go server<br>
 ◻ Improve my butt ugly procedural JavaScript<br>
+◻ Error messages when the graph fails to load<br>
 ◻ Super secret cool next idea  </p>
       </section>
     </div>
