@@ -19,223 +19,42 @@ body {
 #graph-link-placeholder {
 	position: absolute;
 	right: 0;
+	top: 0;
 	width: 25em;
 	text-align: right;
 	background-color: white;
 }
-
+footer {
+	position: absolute;
+	bottom: 0.5em;
+	left: 0.5em
+}
+#graph, body {
+	padding: 0;
+	margin: 0;
+}
 </style>
 <body>
+<div id="graph">&nbsp;</div>
 <div id="graph-link-placeholder">&nbsp;</div>
 <script src='http://stuk.github.io/jszip/dist/jszip.min.js'></script>
 <!--script src='jszip.min.js'></script-->
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <!--script src="d3.v3.min.js"></script-->
+<footer>Legend: Triangles are source code repositories, circles are pipelines, squares are pipeline templates. Lines indicate dependencies. Developed from <a href="http://bl.ocks.org/mbostock">Mike Bostock's Force Directed Graph examples</a>.</footer>
 <script>
-
-GRAPH_DATA_PARAMETER='g'
-pipelines = []
-repositories = {}
-templates = {}
-packages = {}
-nodeLinks={}
-nodeLinks.links = {}
-nodeLinks.sizeOf = function (nodeIndex) { return nodeLinks.links[nodeIndex] ? nodeLinks.links[nodeIndex].length : 0 }
-function showLabels() { return getParameterByName('h') === null }
-
-if (getParameterByName('configUrl')) {
-	buildGraphFromXML()
-}
-else if (getParameterByName(GRAPH_DATA_PARAMETER)) {
-	var decompressed = decompressFromString(getParameterByName(GRAPH_DATA_PARAMETER))
-	pipelines = decompressed.p
-	repositories = decompressed.r
-	templates = decompressed.t
-	nodeLinks.links = decompressed.l
-	packages = decompressed.k
-}
-else {
-	buildGraphFromXML()
-}
-
-function buildGraphFromXML () {
-	var nodes = [], 
-		groups = [], 
-		xmlDoc=loadConfigDocument(), 
-		pipelineGroups=xmlDoc.getElementsByTagName("pipelines"),
-		templatePipelineElements=xmlDoc.getElementsByTagName("templates")[0].getElementsByTagName("pipeline")
-
-	for(templateIndex=0; templateIndex < templatePipelineElements.length; templateIndex++) {
-		foundTemplatePipeline(templatePipelineElements[templateIndex].getAttribute('name'), nodes)
-	}
-	for(groupIndex=0; groupIndex < pipelineGroups.length; groupIndex++) {
-		var pipelineGroup = pipelineGroups[groupIndex],
-			groupName = pipelineGroup.getAttribute('group'),
-			pipelines = pipelineGroup.getElementsByTagName('pipeline')
-		foundGroup(groupName, groups)
-		for(var pipelineIndex=0; pipelineIndex < pipelines.length; pipelineIndex++) {
-
-			var pipeline = pipelines[pipelineIndex],
-				pipelineName=pipeline.getAttribute('name')
-			if (pipelineName) {
-				var pipelineNodeIndex = foundPipeline(pipelineName, groupName, nodes, groups)
-				if (pipeline.getAttribute('template')) {
-					var templateNodeIndex = foundTemplatePipeline(pipeline.getAttribute('template'), nodes)
-					linkFrom(pipelineNodeIndex, templateNodeIndex)
-				}
-				var materialsTag = pipeline.getElementsByTagName('materials')[0]
-				if (materialsTag) {
-					var materials=materialsTag.children
-					for (materialIndex=0; materialIndex < materials.length; materialIndex++) {
-						var material=materials[materialIndex],
-							materialName,
-							materialNodeIndex = -1
-						if (material.tagName==='pipeline') {
-							materialName=material.getAttribute('pipelineName')
-							materialNodeIndex = foundPipeline(materialName, groupName, nodes, groups)
-						}
-						else if (material.tagName==='package') {
-							var packageId = material.getAttribute('ref')
-							materialNodeIndex = foundPackage(packageId, nodes)
-						}
-						else {
-							materialName = material.getAttribute('url')
-							materialNodeIndex = foundRepo(materialName, material.tagName, nodes)
-						}
-						linkFrom(pipelineNodeIndex, materialNodeIndex)
-					}
-				}
-			}
-		}
-	}
-}
-function linkFrom(sourceNodeIndex, targetNodeIndex) {
-	if (!nodeLinks.links[targetNodeIndex]) nodeLinks.links[targetNodeIndex]=[]
-	nodeLinks.links[targetNodeIndex].push(sourceNodeIndex)
-}
-function foundGroup (groupName, groups) {
-	if (groups.indexOf(groupName) < 0) groups.push(groupName)
-	return groups.indexOf(groupName)
-}
-function foundPipeline(pipelineName, groupName, nodes, groups) {
-	var groupNumber=foundGroup(groupName, groups)
-	var nodeLabel = showLabels() ? pipelineName : ""
-	var newNodeAction = function(nodeIndex) { pipelines.push([nodeIndex, groupNumber, nodeLabel]) }
-	return indexOfNode(pipelineName, newNodeAction, nodes)
-}
-function foundRepo(repoUrl, repoType, nodes) {
-	var nodeLabel = showLabels() ? repoUrl : ""
-	var newNodeAction = function(repoNodeIndex) { repositories[repoNodeIndex]=nodeLabel }
-	return indexOfNode(repoUrl, newNodeAction, nodes)
-}
-function foundTemplatePipeline(templateName, nodes) {
-	var nodeLabel = showLabels() ? templateName : ""
-	var newNodeAction = function(nodeIndex) { templates[nodeIndex]=nodeLabel }
-	return indexOfNode(templateName, newNodeAction, nodes)
-}
-function foundPackage(packageId, nodes) {
-	var nodeLabel = showLabels() ? packageId : ""
-	var newNodeAction = function(nodeIndex) { packages[nodeIndex]=nodeLabel }
-	return indexOfNode(packageId, newNodeAction, nodes)
-}
-function indexOfNode(name, newNodeAction, nodes) {
-	if (nodes.indexOf(name) < 0) {
-		nodes.push(name)
-		newNodeAction(nodes.indexOf(name))
-	}
-	return nodes.indexOf(name);
-}
-
-function compressToString(object) {
-	return new JSZip().file('object', JSON.stringify(object)).generate({type:"base64", compression:"deflate"})
-}
-function decompressFromString(compressed) {
-	return JSON.parse(new JSZip().load(compressed, {base64: true, compression:"deflate"}).file('object').asText());
-}
-
-var graph = {'nodes': [], 'links': []}
-
-for (var index in templates) {
-	graph.nodes[index]={'name': templates[index], 'group': 'templates', 'shape': 'square', 'size': nodeLinks.sizeOf(index)}
-}
-for (var index in repositories) {
-	graph.nodes[index]={'name': repositories[index], 'group': 'repositories', 'shape': 'triangle-up', 'size': nodeLinks.sizeOf(index)}
-}
-for (var index in packages) {
-	graph.nodes[index]={'name': packages[index], 'group': 'packages', 'shape': 'triangle-down', 'size': nodeLinks.sizeOf(index)}
-}
-for (var index=0; index < pipelines.length; index++) {
-	var pipeline = pipelines[index]
-	graph.nodes[pipeline[0]]={'name': pipeline[2], 'group': pipeline[1], 'shape': 'circle', 'size': nodeLinks.sizeOf(pipeline[0])}
-}
-for (var target in nodeLinks.links) {
-	for (var sourceIndex=0; sourceIndex < nodeLinks.links[target].length; sourceIndex++) {
-		graph.links.push({'source': nodeLinks.links[target][sourceIndex], 'target': parseInt(target)})
-	}
-}
-shareLinkUrl = '?'+GRAPH_DATA_PARAMETER+'='+encodeURIComponent(compressToString({p:pipelines, r: repositories, t: templates, l: nodeLinks.links, k: packages}))
-var labelsControl
-if (showLabels()) {
-	if (document.location.search.length === 0) {
-		labelsControl = '<a href="' + document.location + '?h=true">hide labels</a>'
-	}
-	else {
-		labelsControl = '<a href="' + document.location + '&h=true">hide labels</a>'
-	}
-}
-else {
-	labelsControl = '<a href="' + String(document.location).replace(/[?&]h=true/,'') + '">show labels</a>'
-}
-
-document.getElementById('graph-link-placeholder').innerHTML += labelsControl
-var CHROME_URL_LIMIT = 10000
-if (shareLinkUrl.length < CHROME_URL_LIMIT) {
-	document.getElementById('graph-link-placeholder').innerHTML += '&nbsp;<a href="'+shareLinkUrl+'">share graph</a>&nbsp;';
-}
-else {
-	document.getElementById('graph-link-placeholder').innerHTML += '&nbsp;too big to share. try hiding labels.';
-}
-function loadConfigDocument() {
-	SYNCHRONOUS=false
-	if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
-		xmlHttp=new XMLHttpRequest();
-	}
-	else { // code for IE6, IE5
-		xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");
-	}
-
-	configUrl=getParameterByName("configUrl") || "sample.xml";
-	xmlHttp.open("GET", configUrl, SYNCHRONOUS)
-	xmlHttp.withCredentials = "true"; // Tells the browser to send authentication cookies.
-	xmlHttp.send();
-	return xmlHttp.responseXML;
-}
-function getParameterByName(name, url) {
-	var url = typeof url !== 'undefined' ? url : window.location.href
-	name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-	var regexS = "[\\?&]" + name + "=([^&#]*)";
-	var regex = new RegExp(regexS);
-	var results = regex.exec(url);
-	if(results == null)
-		return null;
-	else
-		return decodeURIComponent(results[1].replace(/\+/g, " "));
-}
-var width = window.innerWidth,
-	height = window.innerHeight,
-	radius = 70,
-	color = d3.scale.category20();
-
-var force = d3.layout.force()
-		.charge(-300)
-		.linkDistance(100)
-		.size([width, height]);
-
-var svg = d3.select("body").append("svg")
-		.attr("width", width)
-		.attr("height", height);
-
 var drawGraph = function(graph) {
+	var width = window.innerWidth,
+		height = window.innerHeight*0.96,
+		radius = 70,
+		color = d3.scale.category20();
+	var force = d3.layout.force()
+			.charge(-300)
+			.linkDistance(100)
+			.size([width, height]);
+	var svg = d3.select("#graph").append("svg")
+			.attr("width", width)
+			.attr("height", height)
 	force
 		.nodes(graph.nodes)
 		.links(graph.links)
@@ -295,6 +114,207 @@ var drawGraph = function(graph) {
 		});
 	});
 };
+var GRAPH_DATA_PARAMETER='g'
+var GRAPH_DATA_URL_PARAMETER='u'
+
+if (getParameterByName('configUrl')) {
+	dataIsLoaded(buildGraphFromXML())
+}
+else if (getParameterByName(GRAPH_DATA_PARAMETER)) {
+	var decompressed = decompressFromString(getParameterByName(GRAPH_DATA_PARAMETER))
+	dataIsLoaded(decompressed)
+}
+else if (getParameterByName(GRAPH_DATA_URL_PARAMETER)) {
+	var script = document.createElement('script');
+	script.src = getParameterByName(GRAPH_DATA_URL_PARAMETER)
+	document.getElementsByTagName('head')[0].appendChild(script);
+}
+else {
+	dataIsLoaded(buildGraphFromXML())
+}
+function dataIsLoaded(data) {
+	var graph = buildD3Data(data)
+	drawGraph(graph);
+	addControls(data)
+}
+
+function showLabels() { return getParameterByName('h') === null }
+
+function buildGraphFromXML () {
+	var data = {},
+		nodes = [],
+		groups = [],
+		xmlDoc=loadConfigDocument(),
+		pipelineGroups=xmlDoc.getElementsByTagName("pipelines"),
+		templatePipelineElements=xmlDoc.getElementsByTagName("templates")[0].getElementsByTagName("pipeline")
+	data.p = []
+	data.r = {}
+	data.t = {}
+	data.k = {}
+	data.l = {}
+	data.l.links = {}
+	
+	for(templateIndex=0; templateIndex < templatePipelineElements.length; templateIndex++) {
+		foundTemplatePipeline(templatePipelineElements[templateIndex].getAttribute('name'), nodes, data)
+	}
+	for(groupIndex=0; groupIndex < pipelineGroups.length; groupIndex++) {
+		var pipelineGroup = pipelineGroups[groupIndex],
+			groupName = pipelineGroup.getAttribute('group'),
+			pipelineElements = pipelineGroup.getElementsByTagName('pipeline')
+		foundGroup(groupName, groups)
+		for(var pipelineIndex=0; pipelineIndex < pipelineElements.length; pipelineIndex++) {
+
+			var pipeline = pipelineElements[pipelineIndex],
+				pipelineName=pipeline.getAttribute('name')
+			if (pipelineName) {
+				var pipelineNodeIndex = foundPipeline(pipelineName, groupName, nodes, groups, data)
+				if (pipeline.getAttribute('template')) {
+					var templateNodeIndex = foundTemplatePipeline(pipeline.getAttribute('template'), nodes, data)
+					linkFrom(pipelineNodeIndex, templateNodeIndex, data)
+				}
+				var materialsTag = pipeline.getElementsByTagName('materials')[0]
+				if (materialsTag) {
+					var materials=materialsTag.children
+					for (materialIndex=0; materialIndex < materials.length; materialIndex++) {
+						var material=materials[materialIndex],
+							materialName,
+							materialNodeIndex = -1
+						if (material.tagName==='pipeline') {
+							materialName=material.getAttribute('pipelineName')
+							materialNodeIndex = foundPipeline(materialName, groupName, nodes, groups, data)
+						}
+						else if (material.tagName==='package') {
+							var packageId = material.getAttribute('ref')
+							materialNodeIndex = foundPackage(packageId, nodes, data)
+						}
+						else {
+							materialName = material.getAttribute('url')
+							materialNodeIndex = foundRepo(materialName, material.tagName, nodes, data)
+						}
+						linkFrom(pipelineNodeIndex, materialNodeIndex, data)
+					}
+				}
+			}
+		}
+	}
+	return data
+}
+function linkFrom(sourceNodeIndex, targetNodeIndex, data) {
+	if (!data.l.links[targetNodeIndex]) data.l.links[targetNodeIndex]=[]
+	data.l.links[targetNodeIndex].push(sourceNodeIndex)
+}
+function foundGroup (groupName, groups) {
+	if (groups.indexOf(groupName) < 0) groups.push(groupName)
+	return groups.indexOf(groupName)
+}
+function foundPipeline(pipelineName, groupName, nodes, groups, data) {
+	var groupNumber=foundGroup(groupName, groups)
+	var newNodeAction = function(nodeIndex) { data.p.push([nodeIndex, groupNumber, hideLabelIfRequired(pipelineName)]) }
+	return indexOfNode(pipelineName, newNodeAction, nodes)
+}
+function foundRepo(repoUrl, repoType, nodes, data) {
+	var newNodeAction = function(repoNodeIndex) { data.r[repoNodeIndex]=hideLabelIfRequired(repoUrl) }
+	return indexOfNode(repoUrl, newNodeAction, nodes)
+}
+function foundTemplatePipeline(templateName, nodes, data) {
+	var newNodeAction = function(nodeIndex) { data.t[nodeIndex]=hideLabelIfRequired(templateName) }
+	return indexOfNode(templateName, newNodeAction, nodes)
+}
+function foundPackage(packageId, nodes, data) {
+	var newNodeAction = function(nodeIndex) { data.k[nodeIndex]=hideLabelIfRequired(packageId) }
+	return indexOfNode(packageId, newNodeAction, nodes)
+}
+function hideLabelIfRequired(label) { return showLabels() ? label : "" }
+function indexOfNode(name, newNodeAction, nodes) {
+	if (nodes.indexOf(name) < 0) {
+		nodes.push(name)
+		newNodeAction(nodes.indexOf(name))
+	}
+	return nodes.indexOf(name);
+}
+
+function compressToString(object) {
+	return new JSZip().file('object', JSON.stringify(object)).generate({type:"base64", compression:"deflate"})
+}
+function decompressFromString(compressed) {
+	return JSON.parse(new JSZip().load(compressed, {base64: true, compression:"deflate"}).file('object').asText());
+}
+
+function buildD3Data(data) {
+	data.l.sizeOf = function (nodeIndex) { return data.l.links[nodeIndex] ? data.l.links[nodeIndex].length : 0 }
+	var graph = {'nodes': [], 'links': []}
+	var templates = data.t, repositories = data.r, packages = data.k, pipelines = data.p, nodeLinks = data.l
+
+	for (var index in templates) {
+		graph.nodes[index]={'name': templates[index], 'group': 'templates', 'shape': 'square', 'size': nodeLinks.sizeOf(index)}
+	}
+	for (var index in repositories) {
+		graph.nodes[index]={'name': repositories[index], 'group': 'repositories', 'shape': 'triangle-up', 'size': nodeLinks.sizeOf(index)}
+	}
+	for (var index in packages) {
+		graph.nodes[index]={'name': packages[index], 'group': 'packages', 'shape': 'triangle-down', 'size': nodeLinks.sizeOf(index)}
+	}
+	for (var index=0; index < pipelines.length; index++) {
+		var pipeline = pipelines[index]
+		graph.nodes[pipeline[0]]={'name': pipeline[2], 'group': pipeline[1], 'shape': 'circle', 'size': nodeLinks.sizeOf(pipeline[0])}
+	}
+	for (var target in nodeLinks.links) {
+		for (var sourceIndex=0; sourceIndex < nodeLinks.links[target].length; sourceIndex++) {
+			graph.links.push({'source': nodeLinks.links[target][sourceIndex], 'target': parseInt(target)})
+		}
+	}
+	return graph
+}
+function addControls(dependencies) {
+	shareLinkUrl = '?'+GRAPH_DATA_PARAMETER+'='+encodeURIComponent(compressToString(dependencies))
+	var labelsControl
+	if (showLabels()) {
+		if (document.location.search.length === 0) {
+			labelsControl = '<a href="' + document.location + '?h=true">hide labels</a>'
+		}
+		else {
+			labelsControl = '<a href="' + document.location + '&h=true">hide labels</a>'
+		}
+	}
+	else {
+		labelsControl = '<a href="' + String(document.location).replace(/[?&]h=true/,'') + '">show labels</a>'
+	}
+	document.getElementById('graph-link-placeholder').innerHTML += labelsControl
+	var CHROME_URL_LIMIT = 10000
+	if (shareLinkUrl.length < CHROME_URL_LIMIT) {
+		document.getElementById('graph-link-placeholder').innerHTML += '&nbsp;<a href="'+shareLinkUrl+'">share graph</a>&nbsp;';
+	}
+	else {
+		document.getElementById('graph-link-placeholder').innerHTML += '&nbsp;too big to share. try hiding labels.';
+	}
+}
+
+function loadConfigDocument() {
+	SYNCHRONOUS=false
+	if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+		xmlHttp=new XMLHttpRequest();
+	}
+	else { // code for IE6, IE5
+		xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+
+	configUrl=getParameterByName("configUrl") || "sample.xml";
+	xmlHttp.open("GET", configUrl, SYNCHRONOUS)
+	xmlHttp.withCredentials = "true"; // Tells the browser to send authentication cookies.
+	xmlHttp.send();
+	return xmlHttp.responseXML;
+}
+function getParameterByName(name, url) {
+	var url = typeof url !== 'undefined' ? url : window.location.href
+	name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+	var regexS = "[\\?&]" + name + "=([^&#]*)";
+	var regex = new RegExp(regexS);
+	var results = regex.exec(url);
+	if(results == null)
+		return null;
+	else
+		return decodeURIComponent(results[1].replace(/\+/g, " "));
+}
 
 function linkRespectingRadius(d) {
 	// Total difference in x and y from source to target
@@ -311,8 +331,5 @@ function linkRespectingRadius(d) {
 	return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
 }
 
-drawGraph(graph);
-
 </script>
-<p>Legend: Triangles are source code repositories, circles are pipelines, squares are pipeline templates. Lines indicate dependencies.</p>
-<p>Developed from <a href="http://bl.ocks.org/mbostock">Mike Bostock's Force Directed Graph examples</a>.</p>
+
