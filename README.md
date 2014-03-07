@@ -38,6 +38,8 @@ You can only go back as far as your upgrade to v2.2 though as that is when versi
 
 If, like me, yours does not fit on the screen, hit zoom out a few times and refresh the page.
 
+[Here is a link to an example built from our pipeline definitions.](http://mrmanc.github.io/go-dependency-force-layout/pipeline-dependencies.html?u=http://mrmanc.github.io/go-dependency-force-layout/examples/27012014.json)
+
 ![Larger example graph](readmeimages/large.jpg "Larger example graph")
 
 ## What's next?
