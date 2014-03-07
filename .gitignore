@@ -1,4 +1,5 @@
 
 *tmd*
 *.xml
-*.js
+d3.*.js
+jszip.*.js
