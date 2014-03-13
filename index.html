@@ -53,6 +53,10 @@
 
 <p>Use the <a href="pipeline-dependencies.html">hosted HTML page</a> to explore your dependencies. It can build the graph in three ways: fetching and parsing the XML, using graph data encoded into the URL or from a generated JSON file hosted remotely. Here are instructions (with the easiest first):</p>
 
+<h3>Paste in your XML</h3>
+
+<p>If you scroll down there’s a text box you can paste your XML in to. Click load, and your graph will be built from the source. You can't save the JSON at the moment, or share the chart generated (watch this space).</p>
+
 <h3>Sharing graphs as URLs</h3>
 
 Once you've built the graph, a link will appear at the top right which contains the JSON metadata compressed and encoded. For large graphs the compressed data may be too large for some browsers to show, so I've set a hard limit of 10k characters (the limit of Chrome's omnibox) beyond which you’ll see message suggesting you try hiding labels. With the labels hidden the link it generates will not contain the labels, so is safe to share with the public.
@@ -107,6 +111,7 @@ Once you've built the graph, a link will appear at the top right which contains 
 ⊠ Hiding of labels for sharing<br>
 ⊠ Provide obfuscated realistic example to play with<br>
 ⊠ Use GitHub Pages to host the HTML file<br>
+⊠ Allow user to generate a graph based on pasted in XML<br>
 ◻ Allow user to copy / save generated JSON to share with others<br>
 ◻ Allow user to open generated JSON pasted in<br>
 ◻ Replace ugly URL parsing with a decent library<br>
