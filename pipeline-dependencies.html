@@ -33,6 +33,13 @@ footer {
 	padding: 0;
 	margin: 0;
 }
+#config-xml {
+	width: 100%;
+	height: 50%;
+}
+#xml-form {
+	margin-top: 4em;
+}
 </style>
 <body>
 <div id="graph">&nbsp;</div>
@@ -53,3 +60,8 @@ footer {
   ga('send', 'pageview');
 
 </script>
+<div id="xml-form">
+<input type=button onclick="parseXMLFromForm()" value=Load />
+<textarea rows=10 id="config-xml"></textarea>
+</div>
+</body>

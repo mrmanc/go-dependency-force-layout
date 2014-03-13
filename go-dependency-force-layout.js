@@ -1,3 +1,5 @@
+var max_x = 0;
+var max_y = 0;
 var drawGraph = function(graph) {
   var width = window.innerWidth,
     height = window.innerHeight*0.96,
@@ -7,15 +9,20 @@ var drawGraph = function(graph) {
       .charge(-300)
       .linkDistance(100)
       .size([width, height]);
+
   var svg = d3.select("#graph").append("svg")
+  var group = svg
       .attr("width", width)
       .attr("height", height)
+      .attr("preserveAspectRatio", 'meet')
+      .attr("viewBox", '0 0 '+width+' '+height)
+      .append('g')
   force
     .nodes(graph.nodes)
     .links(graph.links)
     .start();
 
-  svg.append("svg:defs").selectAll("marker")
+  group.append("svg:defs").selectAll("marker")
     .data(["arrow"])
     .enter()
     .append("marker")
@@ -31,7 +38,7 @@ var drawGraph = function(graph) {
       .style("fill", function(d) { return "grey"; })
       .attr("d", "M0,-5L10,0L0,5");
 
-  var links = svg.selectAll(".link")
+  var links = group.selectAll(".link")
     .data(graph.links)
     .enter()
       .append("svg:path")
@@ -39,7 +46,7 @@ var drawGraph = function(graph) {
       .style("stroke", function(d) { return "grey"; })
       .attr("marker-end", function(d) { return "url(#arrow)"; });
 
-  var gnodes = svg.selectAll('g.gnode')
+  var gnodes = group.selectAll('g.gnode')
      .data(graph.nodes)
      .enter()
      .append('g')
@@ -65,15 +72,21 @@ var drawGraph = function(graph) {
   force.on("tick", function() {
     links.attr('d', linkRespectingRadius);
     gnodes.attr("transform", function(d) {
+        if ( d.x >= max_x ) { max_x = d.x;}
+        if ( d.y >= max_y ) { max_y = d.y;}
+        if ( d.x <= max_x ) { min_x = d.x;}
+        if ( d.y <= max_y ) { min_y = d.y;}
         return 'translate(' + [d.x, d.y] + ')';
     });
+    force.size([max_x-min_x, max_y-min_y])
+    svg.attr("viewBox", '0 0 '+(max_x-min_x)+' '+(max_y-min_y))
   });
 };
 var GRAPH_DATA_PARAMETER='g'
 var GRAPH_DATA_URL_PARAMETER='u'
 
 if (getParameterByName('configUrl')) {
-  dataIsLoaded(buildGraphFromXML())
+  dataIsLoaded(buildGraphFromXML(loadConfigDocument()))
 }
 else if (getParameterByName(GRAPH_DATA_PARAMETER)) {
   var decompressed = decompressFromString(getParameterByName(GRAPH_DATA_PARAMETER))
@@ -85,21 +98,30 @@ else if (getParameterByName(GRAPH_DATA_URL_PARAMETER)) {
   document.getElementsByTagName('head')[0].appendChild(script);
 }
 else {
-  dataIsLoaded(buildGraphFromXML())
+  dataIsLoaded(buildGraphFromXML(loadConfigDocument()))
 }
 function dataIsLoaded(data) {
   var graph = buildD3Data(data)
-  drawGraph(graph);
+
+  clearOut("graph")
+  clearOut("graph-link-placeholder")
+  drawGraph(graph)
   addControls(data)
+}
+
+function clearOut(elementId) {
+  var myNode = document.getElementById(elementId);
+  while (myNode.firstChild) {
+      myNode.removeChild(myNode.firstChild);
+  }
 }
 
 function showLabels() { return getParameterByName('h') === null }
 
-function buildGraphFromXML () {
+function buildGraphFromXML (xmlDoc) {
   var data = {},
     nodes = [],
     groups = [],
-    xmlDoc=loadConfigDocument(),
     pipelineGroups=xmlDoc.getElementsByTagName("pipelines"),
     templatePipelineElements=xmlDoc.getElementsByTagName("templates")[0].getElementsByTagName("pipeline")
   data.p = []
@@ -284,4 +306,20 @@ function linkRespectingRadius(d) {
   offsetY = (diffY * radiusOfTarget) / pathLength;
 
   return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
+}
+function parseXMLFromForm() {
+  var xml = document.getElementById('config-xml').value;
+  var xmlDoc
+  if (window.DOMParser)
+  {
+  parser=new DOMParser();
+  xmlDoc=parser.parseFromString(xml,"text/xml");
+  }
+else // Internet Explorer
+  {
+  xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
+  xmlDoc.async=false;
+  xmlDoc.loadXML(xml);
+  }
+  dataIsLoaded(buildGraphFromXML(xmlDoc))
 }
