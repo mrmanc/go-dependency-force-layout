@@ -78,8 +78,8 @@ var drawGraph = function(graph) {
         if ( d.y <= max_y ) { min_y = d.y;}
         return 'translate(' + [d.x, d.y] + ')';
     });
-    force.size([max_x-min_x, max_y-min_y])
-    svg.attr("viewBox", '0 0 '+(max_x-min_x)+' '+(max_y-min_y))
+    //force.size([max_x-min_x, max_y-min_y])
+    //svg.attr("viewBox", '0 0 '+(max_x-min_x)+' '+(max_y-min_y))
   });
 };
 var GRAPH_DATA_PARAMETER='g'
